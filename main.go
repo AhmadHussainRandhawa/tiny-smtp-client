@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -32,6 +34,13 @@ func readSMTPResponse(reader *bufio.Reader) ([]string, error) {
 
 func main() {
 
+	email := os.Getenv("SMTP_EMAIL")
+	password := os.Getenv("SMTP_PASSWORD")
+
+	if email == "" || password == "" {
+		panic("SMTP_EMAIL or SMTP_PASSWORD not set")
+	}
+
 	conn, err := net.Dial("tcp", "smtp.gmail.com:587")
 	if err != nil {
 		panic(err)
@@ -40,23 +49,11 @@ func main() {
 
 	reader := bufio.NewReader(conn)
 
-	// Server Greeting
-	_, err = readSMTPResponse(reader)
-	if err != nil {
-		panic(err)
-	}
+	readSMTPResponse(reader)
 
-	fmt.Println()
-
-	// First EHLO
 	fmt.Fprintf(conn, "EHLO localhost\r\n")
+	lines, _ := readSMTPResponse(reader)
 
-	lines, err := readSMTPResponse(reader)
-	if err != nil {
-		panic(err)
-	}
-
-	// Verify STARTTLS support
 	startTLS := false
 	for _, line := range lines {
 		if strings.Contains(line, "STARTTLS") {
@@ -66,40 +63,40 @@ func main() {
 	}
 
 	if !startTLS {
-		panic("Server does not support STARTTLS")
+		panic("STARTTLS not supported")
 	}
-
-	fmt.Println()
-	fmt.Println(">>> STARTTLS")
 
 	fmt.Fprintf(conn, "STARTTLS\r\n")
+	readSMTPResponse(reader)
 
-	_, err = readSMTPResponse(reader)
-	if err != nil {
-		panic(err)
-	}
-
-	// Upgrade existing connection
 	tlsConn := tls.Client(conn, &tls.Config{
 		ServerName: "smtp.gmail.com",
 	})
 
-	err = tlsConn.Handshake()
-	if err != nil {
+	if err := tlsConn.Handshake(); err != nil {
 		panic(err)
 	}
-
-	fmt.Println()
-	fmt.Println("TLS Handshake Successful")
-	fmt.Println()
 
 	reader = bufio.NewReader(tlsConn)
 
-	// RFC requires EHLO again after STARTTLS
 	fmt.Fprintf(tlsConn, "EHLO localhost\r\n")
+	readSMTPResponse(reader)
 
-	_, err = readSMTPResponse(reader)
-	if err != nil {
-		panic(err)
-	}
+	// AUTH LOGIN
+	fmt.Println("\n>>> AUTH LOGIN")
+
+	fmt.Fprintf(tlsConn, "AUTH LOGIN\r\n")
+	readSMTPResponse(reader)
+
+	// Username
+	username := base64.StdEncoding.EncodeToString([]byte(email))
+	fmt.Fprintf(tlsConn, "%s\r\n", username)
+	readSMTPResponse(reader)
+
+	// Password
+	pass := base64.StdEncoding.EncodeToString([]byte(password))
+	fmt.Fprintf(tlsConn, "%s\r\n", pass)
+	readSMTPResponse(reader)
+
+	fmt.Println("\nAuthentication Complete")
 }
