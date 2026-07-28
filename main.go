@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -113,23 +114,52 @@ func main() {
 	fmt.Fprintf(tlsConn, "DATA\r\n")
 	readSMTPResponse(reader)
 
-	// Message
+	// Read the attachment
+	attachmentPath := "attachments/image.png"
+
+	fileData, err := os.ReadFile(attachmentPath)
+	if err != nil {
+		panic(err)
+	}
+
+	// Convert binary file data into Base64 text
+	encodedFile := base64.StdEncoding.EncodeToString(fileData)
+
+	// MIME message
+	boundary := "BOUNDARY_123"
+
 	message := `From: ` + email + `
 To: ` + recipient + `
-Subject: Tiny SMTP Client
+Subject: Image from my Go SMTP Client
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="` + boundary + `"
 
-Assalamu Alaikum!
+--` + boundary + `
+Content-Type: text/plain; charset="UTF-8"
 
-This email was sent manually using my own SMTP client written in Go.
+Assalam u Alaikum!
+
+This email contains an image attachment sent manually by my
+own SMTP client written in Go.
 
 Regards,
 Ahmad
+
+--` + boundary + `
+Content-Type: image/png; name="` + filepath.Base(attachmentPath) + `"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="` + filepath.Base(attachmentPath) + `"
+
+` + encodedFile + `
+
+--` + boundary + `--
 `
 
-	// SMTP requires CRLF line endings
+	// Convert LF to SMTP-required CRLF.
 	message = strings.ReplaceAll(message, "\n", "\r\n")
 
-	fmt.Fprintf(tlsConn, "%s\r\n.\r\n", message)
+	// End SMTP DATA using <CRLF>.<CRLF>.
+	fmt.Fprintf(tlsConn, "%s.\r\n", message)
 	readSMTPResponse(reader)
 
 	// QUIT
