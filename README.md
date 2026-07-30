@@ -209,8 +209,8 @@ This is the first of three projects built to lock in a deep dive on email system
 | Project | What it proves | Status |
 |---|---|:---:|
 | **[tiny-smtp-client](https://github.com/AhmadHussainRandhawa/tiny-smtp-client)** *(this repo)* | Sending mail, from a raw socket up | ✅ Complete |
-| **[mx-lookup-go](https://github.com/AhmadHussainRandhawa/mx-lookup-tool)** | DNS resolution of mail routing (MX + A records) | ✅ Complete |
-| **[smtp-server-go](https://github.com/AhmadHussainRandhawa/tiny-smtp-server)** | Receiving mail — including malformed input | ✅ Complete |
+| **[mx-lookup-tool](https://github.com/AhmadHussainRandhawa/mx-lookup-tool)** | DNS resolution of mail routing (MX + A records) | ✅ Complete |
+| **[tiny-smtp-server](https://github.com/AhmadHussainRandhawa/tiny-smtp-server)** | Receiving mail — including malformed input | ✅ Complete |
 
 ---
 
