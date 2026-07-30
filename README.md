@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📡 tiny-smtp-client
+# 📡 Tiny SMTP Client
 
 **A raw-socket SMTP client, written from scratch in Go.**
 No `net/smtp`. No mail libraries. Just TCP, TLS, and the protocol — implemented by hand.
