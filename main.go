@@ -126,37 +126,45 @@ func main() {
 	encodedFile := base64.StdEncoding.EncodeToString(fileData)
 
 	// MIME message
+	// MIME message
 	boundary := "BOUNDARY_123"
 
-	message := `From: ` + email + `
-To: ` + recipient + `
-Subject: Image from my Go SMTP Client
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="` + boundary + `"
-
---` + boundary + `
-Content-Type: text/plain; charset="UTF-8"
-
-Assalam u Alaikum!
-
-This email contains an image attachment sent manually by my
-own SMTP client written in Go.
-
-Regards,
-Ahmad
-
---` + boundary + `
-Content-Type: image/png; name="` + filepath.Base(attachmentPath) + `"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="` + filepath.Base(attachmentPath) + `"
-
-` + encodedFile + `
-
---` + boundary + `--
-`
-
-	// Convert LF to SMTP-required CRLF.
-	message = strings.ReplaceAll(message, "\n", "\r\n")
+	message := fmt.Sprintf(
+		"From: %s\r\n"+
+			"To: %s\r\n"+
+			"Subject: Image from my Go SMTP Client\r\n"+
+			"MIME-Version: 1.0\r\n"+
+			"Content-Type: multipart/mixed; boundary=\"%s\"\r\n"+
+			"\r\n"+
+			"--%s\r\n"+
+			"Content-Type: text/plain; charset=\"UTF-8\"\r\n"+
+			"\r\n"+
+			"Assalam u Alaikum!\r\n"+
+			"\r\n"+
+			"This email contains an image attachment sent manually by my\r\n"+
+			"own SMTP client written in Go.\r\n"+
+			"\r\n"+
+			"Regards,\r\n"+
+			"Ahmad\r\n"+
+			"\r\n"+
+			"--%s\r\n"+
+			"Content-Type: image/png; name=\"%s\"\r\n"+
+			"Content-Transfer-Encoding: base64\r\n"+
+			"Content-Disposition: attachment; filename=\"%s\"\r\n"+
+			"\r\n"+
+			"%s\r\n"+
+			"\r\n"+
+			"--%s--\r\n",
+		email,
+		recipient,
+		boundary,
+		boundary,
+		boundary,
+		filepath.Base(attachmentPath),
+		filepath.Base(attachmentPath),
+		encodedFile,
+		boundary,
+	)
 
 	// End SMTP DATA using <CRLF>.<CRLF>.
 	fmt.Fprintf(tlsConn, "%s.\r\n", message)

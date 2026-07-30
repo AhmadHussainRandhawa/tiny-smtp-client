@@ -44,3 +44,5 @@ go.sum
 # vendor/
 
 images.png
+tiny-smtp-client
+image.png
